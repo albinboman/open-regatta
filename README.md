@@ -89,6 +89,15 @@ Recommended check before push:
 2. Verify no `.venv`, no `.env`, and no absolute local paths are listed.
 3. Commit and push.
 
+## Issue Automation (Optional)
+
+This repo supports commit-driven GitHub issue creation from seed files.
+
+- Workflow: `.github/workflows/create-issues-from-seed.yml`
+- Seed folder: `.github/issue-seed/`
+
+Current setup is intentionally empty, so no issues are generated unless you add new seed `.md` files (other than `README.md`).
+
 ## Roadmap summary
 
 - Phase 0: Foundation

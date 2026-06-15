@@ -1,0 +1,174 @@
+name: Create Issues From Seed
+
+on:
+  push:
+    paths:
+      - .github/issue-seed/**
+      - .github/workflows/create-issues-from-seed.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  create-issues:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create issues from seed files
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            const seedRoot = '.github/issue-seed';
+            if (!fs.existsSync(seedRoot)) {
+              core.info('No .github/issue-seed directory found. Nothing to do.');
+              return;
+            }
+
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            function walk(dir) {
+              const out = [];
+              for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+                const fullPath = path.join(dir, entry.name);
+                if (entry.isDirectory()) {
+                  out.push(...walk(fullPath));
+                } else {
+                  out.push(fullPath);
+                }
+              }
+              return out;
+            }
+
+            function parseFrontMatter(content) {
+              const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
+              if (!match) return null;
+
+              const frontMatterRaw = match[1];
+              const body = match[2].trim();
+              const frontMatter = {};
+
+              for (const rawLine of frontMatterRaw.split(/\r?\n/)) {
+                const line = rawLine.trim();
+                if (!line || line.startsWith('#')) continue;
+                const idx = line.indexOf(':');
+                if (idx === -1) continue;
+
+                const key = line.slice(0, idx).trim();
+                const value = line.slice(idx + 1).trim();
+                frontMatter[key] = value;
+              }
+
+              return { frontMatter, body };
+            }
+
+            async function ensureLabel(name) {
+              try {
+                await github.rest.issues.createLabel({
+                  owner,
+                  repo,
+                  name,
+                  color: '1f6feb'
+                });
+              } catch (error) {
+                if (error.status !== 422) throw error;
+              }
+            }
+
+            async function findMilestoneNumber(title) {
+              if (!title) return undefined;
+
+              const milestones = await github.paginate(github.rest.issues.listMilestones, {
+                owner,
+                repo,
+                state: 'open',
+                per_page: 100
+              });
+
+              const found = milestones.find((m) => m.title === title);
+              if (!found) {
+                core.warning(`Milestone "${title}" not found. Issue will be created without milestone.`);
+                return undefined;
+              }
+
+              return found.number;
+            }
+
+            const files = walk(seedRoot)
+              .filter((file) => file.endsWith('.md'))
+              .filter((file) => {
+                const base = path.basename(file);
+                if (base === 'README.md') return false;
+                if (base.startsWith('_')) return false;
+                return true;
+              });
+
+            if (files.length === 0) {
+              core.info('No seed files found. Nothing to do.');
+              return;
+            }
+
+            for (const file of files) {
+              const raw = fs.readFileSync(file, 'utf8');
+              const parsed = parseFrontMatter(raw);
+
+              if (!parsed) {
+                core.warning(`Skipping ${file}: missing or invalid front matter.`);
+                continue;
+              }
+
+              const id = parsed.frontMatter.id;
+              const title = parsed.frontMatter.title;
+              const labelsRaw = parsed.frontMatter.labels || '';
+              const milestoneTitle = parsed.frontMatter.milestone || '';
+
+              if (!id || !title) {
+                core.warning(`Skipping ${file}: front matter must include id and title.`);
+                continue;
+              }
+
+              const userLabels = labelsRaw
+                .split(',')
+                .map((label) => label.trim())
+                .filter(Boolean);
+
+              const seedIdLabel = `seed-id:${id}`;
+
+              const existing = await github.rest.issues.listForRepo({
+                owner,
+                repo,
+                state: 'all',
+                labels: seedIdLabel,
+                per_page: 1
+              });
+
+              if (existing.data.length > 0) {
+                core.info(`Skipping ${file}: issue with ${seedIdLabel} already exists.`);
+                continue;
+              }
+
+              const issueLabels = [...new Set([seedIdLabel, ...userLabels])];
+              for (const label of issueLabels) {
+                await ensureLabel(label);
+              }
+
+              const milestone = await findMilestoneNumber(milestoneTitle);
+
+              await github.rest.issues.create({
+                owner,
+                repo,
+                title,
+                body: parsed.body,
+                labels: issueLabels,
+                milestone
+              });
+
+              core.info(`Created issue for ${file}`);
+            }
