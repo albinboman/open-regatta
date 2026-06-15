@@ -1,0 +1,6 @@
+{
+  "source": "mock-grib-v0",
+  "timestamp": "2026-06-15T09:50:00Z",
+  "windSpeedKnots": 14.5,
+  "windDirectionDegrees": 225
+}

@@ -1,0 +1,12 @@
+{
+  "vesselName": "Open Regatta 40",
+  "points": [
+    { "twaDegrees": 40, "twsKnots": 8, "boatSpeedKnots": 6.1 },
+    { "twaDegrees": 52, "twsKnots": 8, "boatSpeedKnots": 6.8 },
+    { "twaDegrees": 70, "twsKnots": 8, "boatSpeedKnots": 7.2 },
+    { "twaDegrees": 90, "twsKnots": 8, "boatSpeedKnots": 7.0 },
+    { "twaDegrees": 110, "twsKnots": 12, "boatSpeedKnots": 8.4 },
+    { "twaDegrees": 130, "twsKnots": 12, "boatSpeedKnots": 8.8 },
+    { "twaDegrees": 150, "twsKnots": 16, "boatSpeedKnots": 9.2 }
+  ]
+}

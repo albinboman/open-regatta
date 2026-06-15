@@ -1,0 +1,42 @@
+{
+  "current": {
+    "vesselId": "OR-ALPHA",
+    "position": {
+      "lat": 57.70716,
+      "lon": 11.96679,
+      "timestamp": "2026-06-15T09:50:00Z",
+      "sogKnots": 6.2,
+      "cogDegrees": 241
+    }
+  },
+  "track": [
+    {
+      "lat": 57.71340,
+      "lon": 11.98230,
+      "timestamp": "2026-06-15T09:20:00Z",
+      "sogKnots": 5.8,
+      "cogDegrees": 235
+    },
+    {
+      "lat": 57.71115,
+      "lon": 11.97700,
+      "timestamp": "2026-06-15T09:30:00Z",
+      "sogKnots": 6.0,
+      "cogDegrees": 238
+    },
+    {
+      "lat": 57.70910,
+      "lon": 11.97180,
+      "timestamp": "2026-06-15T09:40:00Z",
+      "sogKnots": 6.1,
+      "cogDegrees": 240
+    },
+    {
+      "lat": 57.70716,
+      "lon": 11.96679,
+      "timestamp": "2026-06-15T09:50:00Z",
+      "sogKnots": 6.2,
+      "cogDegrees": 241
+    }
+  ]
+}
